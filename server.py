@@ -3,6 +3,7 @@
 import asyncio
 import base64
 import hmac
+import importlib.util
 import json
 import os
 import re
@@ -276,7 +277,7 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/state":
             self.send_json({"config":config(),"data":data(),"capabilities":{
                 "ffmpeg":bool(shutil.which("ffmpeg")),"pillow":True,
-                "edge_tts":__import__("importlib").util.find_spec("edge_tts") is not None,
+                "edge_tts":importlib.util.find_spec("edge_tts") is not None,
                 "real_product_feed_configured":bool(config().get("product_feed_url"))}})
         elif path.startswith("/output/"):
             file_path = (ROOT / path.lstrip("/")).resolve()
