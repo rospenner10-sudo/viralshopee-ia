@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""ViralShopee IA 2.0 - local prototype. Uses Python stdlib, Pillow, ffmpeg, espeak (optional)."""
-import json, os, re, subprocess, threading, urllib.request, urllib.parse, urllib.error, shutil, time, base64, hmac
+"""ViralShopee IA 2.1 - local TTS validation and voice alternation patch."""
+import json, os, re, subprocess, threading, urllib.request, urllib.parse, urllib.error, shutil, time, base64, hmac, wave
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from io import BytesIO
@@ -20,13 +20,10 @@ DEMO=[
  {'id':'demo-8','name':'Necessaire com divisórias','price':'24,90','category':'Beleza e viagem','rating':'4,8','sales':'730+','commission':'Não informada','affiliate_url':'','image_url':'','benefits':['Ajuda a organizar pequenos itens','Boa para levar em viagens','Compartimentos conforme o modelo'],'source':'Demonstração (dados fictícios)','status':'new'},
  {'id':'demo-9','name':'Luz noturna com sensor','price':'27,90','category':'Casa e tecnologia','rating':'4,6','sales':'1.000+','commission':'Não informada','affiliate_url':'','image_url':'','benefits':['Iluminação auxiliar','Pode ser útil em corredores','Confira o tipo de alimentação no anúncio'],'source':'Demonstração (dados fictícios)','status':'new'},
  {'id':'demo-10','name':'Garrafa com marcador de horário','price':'22,90','category':'Acessórios','rating':'4,5','sales':'780+','commission':'Não informada','affiliate_url':'','image_url':'','benefits':['Marcadores visuais de horário','Formato portátil','Confira capacidade e material no anúncio'],'source':'Demonstração (dados fictícios)','status':'new'}]
-
 def load_json(path, default):
  try: return json.loads(path.read_text('utf-8'))
  except Exception: return default
-
 def save_json(path, data): path.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
-
 def config():
  c=load_json(CONFIG,DEFAULT_CONFIG.copy()); return {**DEFAULT_CONFIG,**c}
 def data(): return load_json(DB,{'products':DEMO,'videos':[]})
@@ -36,24 +33,22 @@ def pricefmt(v):
  if not s: return 'consulte o anúncio'
  if s.startswith('R$'): return s
  return 'R$ '+s
-
 def scripts(p, style='mix'):
  name=p.get('name','Achadinho'); price=pricefmt(p.get('price')); benefits=p.get('benefits') or ['Confira os detalhes no anúncio']
  b=[str(x).strip() for x in benefits if str(x).strip()][:3]
- hook=f'Olha esse achadinho que encontrei! 👀'
- demo=f'{name}: uma opção para quem procura praticidade.'
+ hook='Olha esse achadinho que encontrei!'
+ demo=f'{name}: uma opção para quem procura praticidade. '
  demo+=' '.join(b)
  demo+=f' O preço informado é {price}. Confira o anúncio para ver as opções, medidas e condições atualizadas.'
  cta='Gostou? Confira os detalhes pelo link de afiliada.' if p.get('affiliate_url') else 'Gostou? Adicione seu link de afiliada antes de publicar.'
  disc=config().get('affiliate_disclosure','Publicidade: este conteúdo contém link de afiliado.')
  return {'hook':hook,'narration':f'{hook} {demo} {cta}','caption':f'{name} ✨\nPreço informado: {price}\n{cta}\n{disc}\n{p.get("affiliate_url","")}', 'scenes':[{'title':'ACHADINHO DO DIA','text':hook,'seconds':3},{'title':name,'text':(b[0] if b else 'Confira os detalhes do produto')[:110],'seconds':4},{'title':f'POR {price}','text':(b[1] if len(b)>1 else 'Veja os detalhes no anúncio')[:110],'seconds':4},{'title':'CONFIRA NO LINK','text':cta,'seconds':3}], 'style':style}
-
 def render_mp4(p, video, style='product'):
  try:
   from PIL import Image, ImageDraw, ImageFont, ImageOps
  except ImportError: raise RuntimeError('Instale Pillow com: python -m pip install Pillow')
  ffmpeg=shutil.which('ffmpeg')
- if not ffmpeg: raise RuntimeError('FFmpeg não foi encontrado. Instale o FFmpeg e tente novamente.')
+ if not ffmpeg: raise RuntimeError('FFmpeg não foi encontrado.')
  vid=video['id']; work=OUT/('work_'+vid); work.mkdir(exist_ok=True)
  W,H=720,1280
  font_paths=['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf','/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf']
@@ -64,7 +59,7 @@ def render_mp4(p, video, style='product'):
   return ImageFont.load_default()
  bg=(20,22,37); accent=(255,115,57); white=(255,255,255); muted=(220,223,235)
  image=None; url=p.get('image_url','')
- if url.startswith('https://') or url.startswith('http://'):
+ if url.startswith(('https://','http://')):
   try:
    req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
    with urllib.request.urlopen(req,timeout=8) as r: raw=r.read(8*1024*1024)
@@ -73,23 +68,17 @@ def render_mp4(p, video, style='product'):
  scenes=video.get('scenes') or scripts(p)['scenes']; durations=[]
  for i,sc in enumerate(scenes):
   im=Image.new('RGB',(W,H),bg); d=ImageDraw.Draw(im)
-  # simple gradient backdrop
   for y in range(H):
    t=y/H; col=(int(22+16*t),int(23+7*t),int(43+18*t)); d.line((0,y,W,y),fill=col)
   d.rounded_rectangle((32,30,W-32,H-30),radius=32,outline=(74,76,104),width=3)
   d.rounded_rectangle((54,58,300,108),radius=20,fill=accent)
   d.text((72,70),'VIRALSHOPEE IA',font=font(21),fill=(20,22,37))
   if image is not None:
-   thumb=ImageOps.contain(image,(W-110,510))
-   x=(W-thumb.width)//2; y=150+(510-thumb.height)//2
-   im.paste(thumb,(x,y))
+   thumb=ImageOps.contain(image,(W-110,510)); x=(W-thumb.width)//2; y=150+(510-thumb.height)//2; im.paste(thumb,(x,y))
   else:
-   # illustrated product card placeholder, clearly marked
    d.rounded_rectangle((75,165,W-75,665),radius=30,fill=(36,39,62),outline=(90,92,124),width=2)
    d.text((W//2,360),'ACHADINHO',font=font(35),fill=accent,anchor='mm')
    d.text((W//2,420),'foto do produto não fornecida',font=font(21,False),fill=muted,anchor='mm')
-  title=str(sc.get('title',p.get('name','Achadinho')))
-  # title wrapping
   def wrap(text, f, maxw):
    words=str(text).split(); lines=[]; line=''
    for word in words:
@@ -101,40 +90,60 @@ def render_mp4(p, video, style='product'):
    if line: lines.append(line)
    return lines
   y0=715
-  for line in wrap(title,font(42),W-110)[:3]:
+  for line in wrap(sc.get('title',p.get('name','Achadinho')),font(42),W-110)[:3]:
    d.text((W//2,y0),line,font=font(42),fill=white,anchor='mm'); y0+=56
-  body=str(sc.get('text',''))
   y0=max(y0+35,850)
-  for line in wrap(body,font(28,False),W-110)[:5]:
+  for line in wrap(sc.get('text',''),font(28,False),W-110)[:5]:
    d.text((W//2,y0),line,font=font(28,False),fill=muted,anchor='mm'); y0+=42
   if i==2:
    d.rounded_rectangle((100,1040,W-100,1120),radius=25,fill=accent)
    d.text((W//2,1080),pricefmt(p.get('price')),font=font(34),fill=bg,anchor='mm')
   d.text((W//2,H-82),'Confira preço, estoque e detalhes no anúncio',font=font(17,False),fill=muted,anchor='mm')
   path=work/f'scene_{i:02d}.png'; im.save(path); durations.append(max(2,int(sc.get('seconds',3))))
- # Create silent video from slides; use image concat demuxer
  concat=work/'concat.txt'
  with concat.open('w',encoding='utf8') as f:
   for i,dur in enumerate(durations): f.write(f"file '{(work/f'scene_{i:02d}.png').as_posix()}'\nduration {dur}\n")
   f.write(f"file '{(work/f'scene_{len(durations)-1:02d}.png').as_posix()}'\n")
  mp4=OUT/f'viralshopee_{vid}.mp4'
  cmd=[ffmpeg,'-y','-f','concat','-safe','0','-i',str(concat)]
- audio=work/'narration.wav'; has_audio=False
- espeak=shutil.which('espeak')
+ audio=work/'narration.wav'; voice=None; audio_note='Sem áudio: nenhuma ferramenta TTS local disponível'
+ espeak=shutil.which('espeak-ng') or shutil.which('espeak')
  if espeak:
+  voices=[]
   try:
-   subprocess.run([espeak,'-v','pt-br','-s','155','-w',str(audio),video['scripts']['narration']],capture_output=True,text=True,timeout=30,check=True)
-   cmd += ['-i',str(audio)]; has_audio=True
-  except Exception: has_audio=False
- cmd += ['-vf','fps=25,format=yuv420p','-c:v','libx264','-preset','veryfast','-crf','24','-movflags','+faststart']
- if has_audio: cmd += ['-c:a','aac','-b:a','128k','-shortest']
- else: cmd += ['-an']
- cmd += [str(mp4)]
+   listing=subprocess.run([espeak,'--voices'],capture_output=True,text=True,timeout=10)
+   for line in listing.stdout.splitlines():
+    if re.search(r'\bpt[-_]br\b|\bpt\b',line,re.I):
+     code=line.split()[-1] if line.split() else ''
+     if code: voices.append(code)
+  except Exception: pass
+  # Alternate a female/male voice when installed; eSpeak voice variants are synthetic approximations.
+  toggle=int(video.get('voice_index',len(data().get('videos',[]))))%2
+  choices=['pt-br+f3','pt-br+m3'] if toggle==0 else ['pt-br+m3','pt-br+f3']
+  for candidate in choices:
+   try:
+    test=subprocess.run([espeak,'-v',candidate,'-s','155','-w',str(audio),video['scripts']['narration']],capture_output=True,text=True,timeout=45)
+    if test.returncode==0 and audio.exists() and audio.stat().st_size>1000:
+     with wave.open(str(audio),'rb') as wf:
+      if wf.getnframes()>0 and wf.getframerate()>0: voice=candidate; break
+   except Exception: pass
+ if voice:
+  cmd += ['-i',str(audio),'-map','0:v:0','-map','1:a:0','-c:v','libx264','-preset','veryfast','-crf','24','-vf','fps=25,format=yuv420p','-c:a','aac','-b:a','128k','-af','apad','-shortest','-movflags','+faststart',str(mp4)]
+  audio_note=f'Narração local verificada ({voice}); voz sintética'
+ else:
+  cmd += ['-map','0:v:0','-c:v','libx264','-preset','veryfast','-crf','24','-vf','fps=25,format=yuv420p','-an','-movflags','+faststart',str(mp4)]
  r=subprocess.run(cmd,capture_output=True,text=True,timeout=120)
  if r.returncode: raise RuntimeError('FFmpeg falhou: '+r.stderr[-900:])
- video['file']=f'output/{mp4.name}'; video['duration_seconds']=sum(durations); video['audio']=('Narração gerada com espeak' if has_audio else 'Sem áudio: instale espeak com voz pt-br para narração local'); video['rendered_at']=time.strftime('%Y-%m-%d %H:%M:%S')
+ # Validate actual output audio stream; don't label a silent MP4 as narrated.
+ probe=shutil.which('ffprobe')
+ actual_audio=False
+ if probe:
+  pr=subprocess.run([probe,'-v','error','-select_streams','a:0','-show_entries','stream=codec_type','-of','default=noprint_wrappers=1:nokey=1',str(mp4)],capture_output=True,text=True,timeout=15)
+  actual_audio=pr.returncode==0 and 'audio' in pr.stdout
+ if voice and not actual_audio:
+  raise RuntimeError('A narração foi gerada, mas o MP4 final não contém faixa de áudio. Verifique a instalação do FFmpeg/ffprobe.')
+ video['file']=f'output/{mp4.name}'; video['duration_seconds']=sum(durations); video['audio']=audio_note if actual_audio else 'Sem áudio: o servidor não tem uma ferramenta de voz local compatível'; video['rendered_at']=time.strftime('%Y-%m-%d %H:%M:%S')
  return video
-
 class Handler(BaseHTTPRequestHandler):
  def log_message(self,*a): pass
  def authorized(self):
@@ -147,7 +156,7 @@ class Handler(BaseHTTPRequestHandler):
    return hmac.compare_digest(u,user) and hmac.compare_digest(p,password)
   except Exception: return False
  def unauthorized(self):
-  self.send_response(401); self.send_header('WWW-Authenticate','Basic realm=\"ViralShopee IA\", charset=\"UTF-8\"'); self.send_header('Content-Length','0'); self.end_headers()
+  self.send_response(401); self.send_header('WWW-Authenticate','Basic realm="ViralShopee IA", charset="UTF-8"'); self.send_header('Content-Length','0'); self.end_headers()
  def send_json(self,obj,status=200):
   raw=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Content-Length',str(len(raw))); self.send_header('Access-Control-Allow-Origin','*'); self.end_headers(); self.wfile.write(raw)
  def body(self):
@@ -156,7 +165,7 @@ class Handler(BaseHTTPRequestHandler):
   if not self.authorized(): self.unauthorized(); return
   path=urllib.parse.urlparse(self.path).path
   if path=='/': self.serve(ROOT/'index.html'); return
-  if path=='/api/state': self.send_json({'config':config(),'data':data(),'capabilities':{'ffmpeg':bool(shutil.which('ffmpeg')),'pillow':True,'espeak':bool(shutil.which('espeak')),'real_product_feed_configured':bool(config().get('product_feed_url'))}}); return
+  if path=='/api/state': self.send_json({'config':config(),'data':data(),'capabilities':{'ffmpeg':bool(shutil.which('ffmpeg')),'pillow':True,'espeak':bool(shutil.which('espeak') or shutil.which('espeak-ng')),'ffprobe':bool(shutil.which('ffprobe')),'real_product_feed_configured':bool(config().get('product_feed_url'))}}); return
   if path.startswith('/output/'):
    f=(ROOT/path.lstrip('/')).resolve()
    if not str(f).startswith(str(OUT.resolve())) or not f.exists(): self.send_error(404); return
@@ -183,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
    if not url.startswith('https://'):
     self.send_json({'error':'Por segurança, o feed deve usar HTTPS.'},400); return
    try:
-    headers={'Accept':'application/json','User-Agent':'ViralShopeeIA/2.0'}
+    headers={'Accept':'application/json','User-Agent':'ViralShopeeIA/2.1'}
     if c.get('product_feed_token'): headers['Authorization']='Bearer '+c['product_feed_token']
     req=urllib.request.Request(url,headers=headers)
     with urllib.request.urlopen(req,timeout=20) as res: payload=json.loads(res.read(12*1024*1024).decode('utf-8'))
@@ -205,7 +214,7 @@ class Handler(BaseHTTPRequestHandler):
   if path=='/api/generate':
    pid=body.get('product_id'); p=next((x for x in d['products'] if x.get('id')==pid),None)
    if not p: self.send_json({'error':'Produto não encontrado'},404); return
-   v={'id':make_id(),'product_id':pid,'product_name':p.get('name','Produto'),'status':'Aguardando revisão','approved':False,'style':body.get('style','product'),'scripts':scripts(p,body.get('style','product')),'file':'','created_at':time.strftime('%Y-%m-%d %H:%M:%S')}
+   v={'id':make_id(),'product_id':pid,'product_name':p.get('name','Produto'),'status':'Aguardando revisão','approved':False,'style':body.get('style','product'),'scripts':scripts(p,body.get('style','product')),'file':'','created_at':time.strftime('%Y-%m-%d %H:%M:%S'),'voice_index':len(d.get('videos',[]))}
    try: v=render_mp4(p,v,body.get('style','product'))
    except Exception as e: self.send_json({'error':'Falha ao gerar MP4: '+str(e)},500); return
    d['videos'].insert(0,v); p['status']='video criado'; save_json(DB,d); self.send_json({'ok':True,'video':v}); return
@@ -216,7 +225,7 @@ class Handler(BaseHTTPRequestHandler):
    if not candidates: candidates=d['products'][:target]
    made=[]; errors=[]
    for p in candidates:
-    v={'id':make_id()+str(len(made)),'product_id':p.get('id'),'product_name':p.get('name','Produto'),'status':'Aguardando revisão','approved':False,'style':'product','scripts':scripts(p,'product'),'file':'','created_at':time.strftime('%Y-%m-%d %H:%M:%S')}
+    v={'id':make_id()+str(len(made)),'product_id':p.get('id'),'product_name':p.get('name','Produto'),'status':'Aguardando revisão','approved':False,'style':'product','scripts':scripts(p,'product'),'file':'','created_at':time.strftime('%Y-%m-%d %H:%M:%S'),'voice_index':len(d.get('videos',[]))+len(made)}
     try:
      v=render_mp4(p,v,'product'); d['videos'].insert(0,v); p['status']='video criado'; made.append(v)
     except Exception as e: errors.append({'product':p.get('name'),'error':str(e)})
@@ -229,11 +238,10 @@ class Handler(BaseHTTPRequestHandler):
   if path=='/api/export':
    self.send_json({'ok':True,'data':d}); return
   self.send_json({'error':'Rota não encontrada'},404)
-
 def main():
  host='0.0.0.0'; port=int(os.environ.get('PORT','8765'))
  if not os.environ.get('APP_USERNAME') or not os.environ.get('APP_PASSWORD'):
   raise SystemExit('Configure APP_USERNAME e APP_PASSWORD antes de iniciar o servidor.')
- print(f'ViralShopee IA 2.0 escutando em {host}:{port} (autenticação ativada)')
+ print(f'ViralShopee IA 2.1 escutando em {host}:{port} (autenticação ativada)')
  ThreadingHTTPServer((host,port),Handler).serve_forever()
 if __name__=='__main__': main()
