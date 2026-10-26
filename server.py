@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """ViralShopee IA 2.0 - local prototype. Uses Python stdlib, Pillow, ffmpeg, espeak (optional)."""
-import json, os, re, subprocess, threading, urllib.request, urllib.parse, urllib.error, shutil, time
+import json, os, re, subprocess, threading, urllib.request, urllib.parse, urllib.error, shutil, time, base64, hmac
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from io import BytesIO
@@ -137,11 +137,23 @@ def render_mp4(p, video, style='product'):
 
 class Handler(BaseHTTPRequestHandler):
  def log_message(self,*a): pass
+ def authorized(self):
+  user=os.environ.get('APP_USERNAME','').strip(); password=os.environ.get('APP_PASSWORD','')
+  if not user or not password: return False
+  header=self.headers.get('Authorization','')
+  if not header.startswith('Basic '): return False
+  try:
+   raw=base64.b64decode(header.split(' ',1)[1]).decode('utf-8'); u,p=raw.split(':',1)
+   return hmac.compare_digest(u,user) and hmac.compare_digest(p,password)
+  except Exception: return False
+ def unauthorized(self):
+  self.send_response(401); self.send_header('WWW-Authenticate','Basic realm=\"ViralShopee IA\", charset=\"UTF-8\"'); self.send_header('Content-Length','0'); self.end_headers()
  def send_json(self,obj,status=200):
   raw=json.dumps(obj,ensure_ascii=False).encode(); self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Content-Length',str(len(raw))); self.send_header('Access-Control-Allow-Origin','*'); self.end_headers(); self.wfile.write(raw)
  def body(self):
   n=int(self.headers.get('Content-Length','0')); return json.loads(self.rfile.read(n).decode() or '{}')
  def do_GET(self):
+  if not self.authorized(): self.unauthorized(); return
   path=urllib.parse.urlparse(self.path).path
   if path=='/': self.serve(ROOT/'index.html'); return
   if path=='/api/state': self.send_json({'config':config(),'data':data(),'capabilities':{'ffmpeg':bool(shutil.which('ffmpeg')),'pillow':True,'espeak':bool(shutil.which('espeak')),'real_product_feed_configured':bool(config().get('product_feed_url'))}}); return
@@ -155,6 +167,7 @@ class Handler(BaseHTTPRequestHandler):
   raw=f.read_bytes(); typ='text/html; charset=utf-8' if f.suffix=='.html' else ('video/mp4' if f.suffix=='.mp4' else 'application/octet-stream')
   self.send_response(200); self.send_header('Content-Type',typ); self.send_header('Content-Length',str(len(raw))); self.end_headers(); self.wfile.write(raw)
  def do_POST(self):
+  if not self.authorized(): self.unauthorized(); return
   path=urllib.parse.urlparse(self.path).path
   try: body=self.body()
   except Exception: self.send_json({'error':'JSON inválido'},400); return
@@ -218,7 +231,9 @@ class Handler(BaseHTTPRequestHandler):
   self.send_json({'error':'Rota não encontrada'},404)
 
 def main():
- print('ViralShopee IA 2.0: http://127.0.0.1:8765')
- print('Feche com Ctrl+C. Esta versão é local; para uso público, hospede com autenticação e HTTPS.')
- ThreadingHTTPServer(('127.0.0.1',8765),Handler).serve_forever()
+ host='0.0.0.0'; port=int(os.environ.get('PORT','8765'))
+ if not os.environ.get('APP_USERNAME') or not os.environ.get('APP_PASSWORD'):
+  raise SystemExit('Configure APP_USERNAME e APP_PASSWORD antes de iniciar o servidor.')
+ print(f'ViralShopee IA 2.0 escutando em {host}:{port} (autenticação ativada)')
+ ThreadingHTTPServer((host,port),Handler).serve_forever()
 if __name__=='__main__': main()

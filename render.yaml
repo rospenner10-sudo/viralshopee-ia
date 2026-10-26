@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: viralshopee-ia
+    runtime: python
+    plan: free
+    buildCommand: apt-get update && apt-get install -y ffmpeg espeak && pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: APP_USERNAME
+        sync: false
+      - key: APP_PASSWORD
+        sync: false

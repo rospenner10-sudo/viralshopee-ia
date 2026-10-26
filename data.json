@@ -1,0 +1,267 @@
+{
+  "products": [
+    {
+      "id": "demo-1",
+      "name": "Organizador de cozinha compacto",
+      "price": "29,90",
+      "category": "Casa e organização",
+      "rating": "4,8",
+      "sales": "1.200+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Ajuda a aproveitar espaços pequenos",
+        "Visual simples e funcional",
+        "Boa ideia para organização"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "video criado"
+    },
+    {
+      "id": "demo-2",
+      "name": "Luminária decorativa LED",
+      "price": "39,90",
+      "category": "Casa e decoração",
+      "rating": "4,7",
+      "sales": "850+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Iluminação decorativa",
+        "Combina com diferentes ambientes",
+        "Opção para presentear"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "video criado"
+    },
+    {
+      "id": "demo-3",
+      "name": "Acessório organizador de cabos",
+      "price": "12,99",
+      "category": "Tecnologia",
+      "rating": "4,9",
+      "sales": "2.000+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Ajuda a organizar fios",
+        "Pequeno e fácil de guardar",
+        "Útil para mesa de trabalho"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-4",
+      "name": "Kit de potes herméticos",
+      "price": "49,90",
+      "category": "Cozinha",
+      "rating": "4,8",
+      "sales": "670+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Organização de mantimentos",
+        "Tamanhos variados conforme o kit",
+        "Visual organizado na despensa"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-5",
+      "name": "Suporte ajustável para celular",
+      "price": "19,90",
+      "category": "Tecnologia",
+      "rating": "4,6",
+      "sales": "1.500+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Ajuste de ângulo",
+        "Útil para chamadas e vídeos",
+        "Compacto para guardar"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-6",
+      "name": "Bolsa organizadora de viagem",
+      "price": "34,90",
+      "category": "Viagem",
+      "rating": "4,7",
+      "sales": "900+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Ajuda a separar itens na mala",
+        "Formato compacto",
+        "Prática para viagens"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-7",
+      "name": "Escova de limpeza multiuso",
+      "price": "16,90",
+      "category": "Casa",
+      "rating": "4,7",
+      "sales": "1.100+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Para tarefas de limpeza do dia a dia",
+        "Fácil de armazenar",
+        "Acessório multiuso"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-8",
+      "name": "Necessaire com divisórias",
+      "price": "24,90",
+      "category": "Beleza e viagem",
+      "rating": "4,8",
+      "sales": "730+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Ajuda a organizar pequenos itens",
+        "Boa para levar em viagens",
+        "Compartimentos conforme o modelo"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-9",
+      "name": "Luz noturna com sensor",
+      "price": "27,90",
+      "category": "Casa e tecnologia",
+      "rating": "4,6",
+      "sales": "1.000+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Iluminação auxiliar",
+        "Pode ser útil em corredores",
+        "Confira o tipo de alimentação no anúncio"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    },
+    {
+      "id": "demo-10",
+      "name": "Garrafa com marcador de horário",
+      "price": "22,90",
+      "category": "Acessórios",
+      "rating": "4,5",
+      "sales": "780+",
+      "commission": "Não informada",
+      "affiliate_url": "",
+      "image_url": "",
+      "benefits": [
+        "Marcadores visuais de horário",
+        "Formato portátil",
+        "Confira capacidade e material no anúncio"
+      ],
+      "source": "Demonstração (dados fictícios)",
+      "status": "new"
+    }
+  ],
+  "videos": [
+    {
+      "id": "1792975221951",
+      "product_id": "demo-2",
+      "product_name": "Luminária decorativa LED",
+      "status": "Aguardando revisão",
+      "approved": false,
+      "style": "product",
+      "scripts": {
+        "hook": "Olha esse achadinho que encontrei! 👀",
+        "narration": "Olha esse achadinho que encontrei! 👀 Luminária decorativa LED: uma opção para quem procura praticidade.Iluminação decorativa Combina com diferentes ambientes Opção para presentear O preço informado é R$ 39,90. Confira o anúncio para ver as opções, medidas e condições atualizadas. Gostou? Adicione seu link de afiliada antes de publicar.",
+        "caption": "Luminária decorativa LED ✨\nPreço informado: R$ 39,90\nGostou? Adicione seu link de afiliada antes de publicar.\nPublicidade: este conteúdo contém link de afiliado.\n",
+        "scenes": [
+          {
+            "title": "ACHADINHO DO DIA",
+            "text": "Olha esse achadinho que encontrei! 👀",
+            "seconds": 3
+          },
+          {
+            "title": "Luminária decorativa LED",
+            "text": "Iluminação decorativa",
+            "seconds": 4
+          },
+          {
+            "title": "POR R$ 39,90",
+            "text": "Combina com diferentes ambientes",
+            "seconds": 4
+          },
+          {
+            "title": "CONFIRA NO LINK",
+            "text": "Gostou? Adicione seu link de afiliada antes de publicar.",
+            "seconds": 3
+          }
+        ],
+        "style": "product"
+      },
+      "file": "output/viralshopee_1792975221951.mp4",
+      "created_at": "2026-10-26 00:40:21",
+      "duration_seconds": 14,
+      "audio": "Narração gerada com espeak",
+      "rendered_at": "2026-10-26 00:40:23"
+    },
+    {
+      "id": "1792975192217",
+      "product_id": "demo-1",
+      "product_name": "Organizador de cozinha compacto",
+      "status": "Aguardando revisão",
+      "approved": false,
+      "style": "product",
+      "scripts": {
+        "hook": "Olha esse achadinho que encontrei! 👀",
+        "narration": "Olha esse achadinho que encontrei! 👀 Organizador de cozinha compacto: uma opção para quem procura praticidade.Ajuda a aproveitar espaços pequenos Visual simples e funcional Boa ideia para organização O preço informado é R$ 29,90. Confira o anúncio para ver as opções, medidas e condições atualizadas. Gostou? Adicione seu link de afiliada antes de publicar.",
+        "caption": "Organizador de cozinha compacto ✨\nPreço informado: R$ 29,90\nGostou? Adicione seu link de afiliada antes de publicar.\nPublicidade: este conteúdo contém link de afiliado.\n",
+        "scenes": [
+          {
+            "title": "ACHADINHO DO DIA",
+            "text": "Olha esse achadinho que encontrei! 👀",
+            "seconds": 3
+          },
+          {
+            "title": "Organizador de cozinha compacto",
+            "text": "Ajuda a aproveitar espaços pequenos",
+            "seconds": 4
+          },
+          {
+            "title": "POR R$ 29,90",
+            "text": "Visual simples e funcional",
+            "seconds": 4
+          },
+          {
+            "title": "CONFIRA NO LINK",
+            "text": "Gostou? Adicione seu link de afiliada antes de publicar.",
+            "seconds": 3
+          }
+        ],
+        "style": "product"
+      },
+      "file": "output/viralshopee_1792975192217.mp4",
+      "created_at": "2026-10-26 00:39:52",
+      "duration_seconds": 14,
+      "rendered_at": "2026-10-26 00:39:53"
+    }
+  ]
+}
